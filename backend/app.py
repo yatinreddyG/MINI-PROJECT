@@ -10,8 +10,16 @@ CORS(app)
 
 print("\n🚀 Starting NEW MINI Backend...")
 
-# Train models at startup
-models_store = train_all_models()
+# Lazy loading of models
+models_store = None
+
+def get_models():
+    global models_store
+    if models_store is None:
+        print("⏳ Training models...")
+        models_store = train_all_models()
+        print("✅ Models ready")
+    return models_store
 
 print("✅ Backend Ready\n")
 
@@ -25,8 +33,9 @@ def handle_predict(disease):
         if error:
             return jsonify({"error": error}), 400
 
-        # Predict
-        result = predict(disease, data, models_store)
+        # ✅ Use lazy-loaded models
+        result = predict(disease, data, get_models())
+
         return jsonify(result), 200
 
     except Exception as e:
@@ -38,7 +47,7 @@ def handle_predict(disease):
 def health():
     return jsonify({
         "status": "running",
-        "models": "ready"
+        "models": "lazy-loaded"
     }), 200
 
 
